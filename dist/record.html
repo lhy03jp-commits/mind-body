@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>記録を入力 — 健康・メンタル管理ダッシュボード</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50:  '#f0f7ff',
+              100: '#e0efff',
+              200: '#b9daff',
+              300: '#7cbdff',
+              400: '#369afc',
+              500: '#0b7dee',
+              600: '#0060cc',
+              700: '#004fa6',
+              800: '#054489',
+              900: '#0a3a72',
+            },
+          },
+          fontFamily: {
+            sans: ['"Inter"', '"Noto Sans JP"', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    .gradient-bar { background: linear-gradient(90deg, #0b7dee 0%, #369afc 100%); }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .section-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #64748b;
+    }
+
+    /* スライダー共通スタイル */
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%; height: 6px;
+      border-radius: 3px; outline: none; cursor: pointer;
+      background: #e2e8f0;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #0b7dee;
+      box-shadow: 0 0 0 3px rgba(11,125,238,0.2);
+      cursor: pointer; transition: box-shadow 0.15s;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      box-shadow: 0 0 0 6px rgba(11,125,238,0.2);
+    }
+    input[type=range].slider-orange::-webkit-slider-thumb { background: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,0.2); }
+    input[type=range].slider-rose::-webkit-slider-thumb   { background: #f43f5e; box-shadow: 0 0 0 3px rgba(244,63,94,0.2); }
+    input[type=range].slider-indigo::-webkit-slider-thumb{ background: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+    input[type=range].slider-emerald::-webkit-slider-thumb{ background:#10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.2); }
+    input[type=range].slider-violet::-webkit-slider-thumb{ background: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.2); }
+
+    /* 運動チェックボックス */
+    input[type="checkbox"].exercise-check {
+      -webkit-appearance: none; appearance: none;
+      width: 1.1rem; height: 1.1rem; flex-shrink: 0;
+      border: 2px solid #cbd5e1; border-radius: 4px;
+      background: #fff; cursor: pointer; position: relative;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    input[type="checkbox"].exercise-check:checked {
+      background: #10b981; border-color: #10b981;
+    }
+    input[type="checkbox"].exercise-check:checked::after {
+      content: ''; position: absolute;
+      left: 3px; top: 0px; width: 6px; height: 10px;
+      border-right: 2px solid #fff; border-bottom: 2px solid #fff;
+      transform: rotate(35deg);
+    }
+    input[type="checkbox"].exercise-check:focus {
+      outline: 2px solid rgba(11,125,238,0.25); outline-offset: 2px;
+    }
+
+    /* 絵文字レベルボタン */
+    .emoji-btn {
+      width: 3rem; height: 3rem; border-radius: 0.75rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; cursor: pointer;
+      border: 2px solid transparent;
+      background: #f8fafc;
+      transition: border-color 0.15s, transform 0.15s, background 0.15s;
+    }
+    .emoji-btn:hover  { transform: scale(1.1); background: #e0efff; }
+    .emoji-btn.active { border-color: #0b7dee; background: #e0efff; transform: scale(1.1); }
+
+    /* タグチップ選択 */
+    .tag-btn {
+      padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 500;
+      border: 1px solid #e2e8f0; color: #64748b; background: #f8fafc;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .tag-btn:hover  { border-color: #0b7dee; color: #0b7dee; }
+    .tag-btn.active { border-color: #0b7dee; color: #0b7dee; background: #e0efff; }
+
+    /* 入力フィールド */
+    .field {
+      width: 100%; border: 1px solid #e2e8f0; border-radius: 0.75rem;
+      padding: 0.625rem 0.875rem; font-size: 0.875rem;
+      outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+      background: #fff; color: #1e293b;
+    }
+    .field:focus { border-color: #0b7dee; box-shadow: 0 0 0 3px rgba(11,125,238,0.12); }
+    textarea.field { resize: vertical; min-height: 72px; }
+
+    /* 完了オーバーレイ */
+    #successOverlay {
+      display: none; position: fixed; inset: 0; z-index: 100;
+      background: rgba(11,125,238,0.08); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    #successOverlay.show { display: flex; }
+
+    /* プログレスバー（入力進捗） */
+    #progressBar { transition: width 0.4s ease; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans">
+
+  <!-- ===== ヘッダー ===== -->
+  <header class="bg-white border-b border-slate-100 sticky top-0 z-30 shadow-sm" role="banner">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="index-g.html" class="w-8 h-8 rounded-xl gradient-bar flex items-center justify-center shadow hover:opacity-90 transition" aria-label="ダッシュボードに戻る">
+          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 20.364l-7.682-7.682a4.5 4.5 0 010-6.364z"/>
+          </svg>
+        </a>
+        <div>
+          <p class="text-slate-800 font-semibold text-sm leading-tight">今日の記録を入力</p>
+          <p class="text-slate-400 text-xs" id="headerDate"></p>
+        </div>
+      </div>
+      <!-- 入力進捗 -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-400" id="progressLabel">0 / 7</span>
+        <div class="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+          <div id="progressBar" class="h-full rounded-full gradient-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== メイン ===== -->
+  <main class="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-5" role="main">
+
+    <form id="recordForm" novalidate>
+
+      <!-- ── 日付 ── -->
+      <div class="card p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-lg" aria-hidden="true">📅</span>
+          <p class="section-label">記録日</p>
+        </div>
+        <input type="date" id="recordDate" class="field" required aria-label="記録日" />
+      </div>
+
+      <!-- ══════════════════════════════════════
+           1. 気分
+      ══════════════════════════════════════ -->
+      <section class="card p-5 space-y-4" aria-labelledby="mood-heading" data-section="mood">
+        <div class="flex items-center gap-2">
+          <span class="text-lg" aria-hidden="true">😊</span>
+          <h2 id="mood-heading" class="section-label">気分</h2>
+          <span class="ml-auto text-xs text-slate-400">必須</span>
+        </div>
+
+        <!-- 絵文字レベル選択 -->
+        <div>
+          <p class="text-xs text-slate-500 mb-2">今日の気分は？</p>
+          <div class="flex gap-2 flex-wrap" role="group" aria-label="気分レベル選択">
+            <button type="button" class="emoji-btn" data-group="mood" data-val="2"  title="とても低調">😢</button>
+            <button type="button" class="emoji-btn" data-group="mood" data-val="4"  title="低調">😔</button>
+            <button type="button" class="emoji-btn" data-group="mood" data-val="6"  title="普通">😐</button>
+            <button type="button" class="emoji-btn" data-group="mood" data-val="8"  title="良好">😊</button>
+            <button type="button" class="emoji-btn" data-group="mood" data-val="10" title="絶好調">😄</button>
+          </div>
+          <input type="hidden" id="moodEmoji" name="moodEmoji" value="" />
+        </div>
+
+        <!-- スコアスライダー -->
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <p class="text-xs text-slate-500">スコア（細かく調整）</p>
+            <span class="text-sm font-bold text-primary-600" id="moodVal">—</span>
+          </div>
+          <input type="range" id="moodScore" name="moodScore" min="1" max="10" step="0.5" value="5" class="w-full" aria-label="気分スコア" />
+          <div class="flex justify-between text-xs text-slate-400 mt-0.5"><span>1</span><span>5</span><span>10</span></div>
+        </div>
+
+        <!-- キーワードタグ -->
+        <div>
+          <p class="text-xs text-slate-500 mb-2">キーワード（複数可）</p>
+          <div class="flex flex-wrap gap-2" role="group" aria-label="気分キーワード">
+            <button type="button" class="tag-btn" data-group="moodTag">やる気あり</button>
+            <button type="button" class="tag-btn" data-group="moodTag">集中できた</button>
+            <button type="button" class="tag-btn" data-group="moodTag">やや疲れ気味</button>
+            <button type="button" class="tag-btn" data-group="moodTag">ストレスあり</button>
+            <button type="button" class="tag-btn" data-group="moodTag">穏やか</button>
+            <button type="button" class="tag-btn" data-group="moodTag">不安気味</button>
+            <button type="button" class="tag-btn" data-group="moodTag">達成感あり</button>
+            <button type="button" class="tag-btn" data-group="moodTag">気分転換した</button>
+          </div>
+        </div>
+
+        <!-- メモ -->
+        <div>
+          <p class="text-xs text-slate-500 mb-1.5">一言メモ（任意）</p>
+          <textarea id="moodNote" name="moodNote" class="field" placeholder="今日の気分について一言…" maxlength="200" aria-label="気分のメモ"></textarea>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════
+           2. 睡眠
+      ══════════════════════════════════════ -->
+      <section class="card p-5 space-y-4" aria-labelledby="sleep-heading" data-section="sleep">
+        <div class="flex items-center gap-2">
+          <span class="text-lg" aria-hidden="true">🌙</span>
+          <h2 id="sleep-heading" class="section-label">睡眠</h2>
+          <span class="ml-auto text-xs text-slate-400">必須</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <!-- 睡眠時間 -->
+          <div>
+            <label for="sleepHours" class="text-xs text-slate-500 block mb-1.5">睡眠時間</label>
+            <div class="relative">
+              <input type="number" id="sleepHours" name="sleepHours" class="field pr-10" min="0" max="24" step="0.5" placeholder="7.5" aria-label="睡眠時間（時間）" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">h</span>
+            </div>
+          </div>
+          <!-- 就寝時刻 -->
+          <div>
+            <label for="sleepBedtime" class="text-xs text-slate-500 block mb-1.5">就寝時刻</label>
+            <input type="time" id="sleepBedtime" name="sleepBedtime" class="field" aria-label="就寝時刻" />
+          </div>
+        </div>
+
+        <!-- 睡眠の質スコア -->
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <p class="text-xs text-slate-500">睡眠の質スコア</p>
+            <span class="text-sm font-bold text-indigo-500" id="sleepQualVal">—</span>
+          </div>
+          <input type="range" id="sleepQuality" name="sleepQuality" min="1" max="10" step="1" value="5" class="slider-indigo" aria-label="睡眠の質スコア" />
+          <div class="flex justify-between text-xs text-slate-400 mt-0.5"><span>1 熟睡できず</span><span>10 ぐっすり</span></div>
+        </div>
+
+        <!-- 睡眠キーワード -->
+        <div>
+          <p class="text-xs text-slate-500 mb-2">キーワード（複数可）</p>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" class="tag-btn" data-group="sleepTag">すっきり起床</button>
+            <button type="button" class="tag-btn" data-group="sleepTag">夢を見た</button>
+            <button type="button" class="tag-btn" data-group="sleepTag">途中で目が覚めた</button>
+            <button type="button" class="tag-btn" data-group="sleepTag">寝つきが悪かった</button>
+            <button type="button" class="tag-btn" data-group="sleepTag">眠気が残った</button>
+            <button type="button" class="tag-btn" data-group="sleepTag">深く眠れた</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════
+           3. 仕事負荷
+      ══════════════════════════════════════ -->
+      <section class="card p-5 space-y-4" aria-labelledby="work-heading" data-section="work">
+        <div class="flex items-center gap-2">
+          <span class="text-lg" aria-hidden="true">💼</span>
+          <h2 id="work-heading" class="section-label">仕事負荷</h2>
+          <span class="ml-auto text-xs text-slate-400">必須</span>
+        </div>
+
+        <!-- 負荷スコア -->
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <p class="text-xs text-slate-500">負荷スコア（高いほど負荷大）</p>
+            <span class="text-sm font-bold text-rose-500" id="workVal">—</span>
+          </div>
+          <input type="range" id="workScore" name="workScore" min="1" max="10" step="1" value="5" class="slider-rose" aria-label="仕事負荷スコア" />
+          <div class="flex justify-between text-xs text-slate-400 mt-0.5"><span>1 余裕</span><span>5 普通</span><span>10 限界</span></div>
+        </div>
+
+        <!-- 仕事キーワード -->
+        <div>
+          <p class="text-xs text-slate-500 mb-2">キーワード（複数可）</p>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" class="tag-btn" data-group="workTag">締め切りあり</button>
+            <button type="button" class="tag-btn" data-group="workTag">残業した</button>
+            <button type="button" class="tag-btn" data-group="workTag">集中作業</button>
+            <button type="button" class="tag-btn" data-group="workTag">チームと協力</button>
+            <button type="button" class="tag-btn" data-group="workTag">プレッシャーあり</button>
+            <button type="button" class="tag-btn" data-group="workTag">スムーズだった</button>
+          </div>
+        </div>
+
+        <!-- メモ -->
+        <div>
+          <p class="text-xs text-slate-500 mb-1.5">一言メモ（任意）</p>
+          <textarea id="workNote" name="workNote" class="field" placeholder="今日の仕事について…" maxlength="200" aria-label="仕事のメモ"></textarea>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════
+           4. 体重・体脂肪率
+      ══════════════════════════════════════ -->
+      <section class="card p-5 space-y-4" aria-labelledby="body-heading" data-section="body">
+        <div class="flex items-center gap-2">
+          <span class="text-lg" aria-hidden="true">⚖️</span>
+          <h2 id="body-heading" class="section-label">体重・体脂肪率</h2>
+          <span class="ml-auto text-xs text-slate-400">必須</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <!-- 体重 -->
+          <div>
+            <label for="bodyWeight" class="text-xs text-slate-500 block mb-1.5">体重</label>
+            <div class="relative">
+              <input type="number" id="bodyWeight" name="bodyWeight" class="field pr-10" min="30" max="200" step="0.1" placeholder="68.2" aria-label="体重（kg）" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">kg</span>
+            </div>
+          </div>
+          <!-- 体脂肪率 -->
+          <div>
+            <label for="bodyFat" class="text-xs text-slate-500 block mb-1.5">体脂肪率</label>
+            <div class="relative">
+              <input type="number" id="bodyFat" name="bodyFat" class="field pr-8" min="1" max="60" step="0.1" placeholder="24.2" aria-label="体脂肪率（%）" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BMI 自動計算表示 -->
+        <div class="bg-slate-50 rounded-xl px-4 py-3 flex items-center gap-4">
+          <div class="text-center">
+            <p class="text-xs text-slate-400">BMI（自動計算）</p>
+            <p class="text-lg font-bold text-slate-700" id="bmiDisplay">—</p>
+          </div>
+          <div class="flex-1">
+            <label for="bodyHeight" class="text-xs text-slate-500 block mb-1">身長（一度だけ入力）</label>
+            <div class="relative">
+              <input type="number" id="bodyHeight" name="bodyHeight" class="field pr-8 text-sm py-1.5" min="100" max="250" step="0.1" placeholder="176" aria-label="身長（cm）" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">cm</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 体調メモ -->
+        <div>
+          <p class="text-xs text-slate-500 mb-1.5">体調メモ（任意）</p>
+          <textarea id="bodyNote" name="bodyNote" class="field" placeholder="体の調子・気になること…" maxlength="200" aria-label="体調のメモ"></textarea>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════
+           5. 運動
+      ══════════════════════════════════════ -->
+      <section class="card p-5 space-y-4" aria-labelledby="exercise-heading" data-section="exercise">
+        <div class="flex items-center gap-2">
+          <span class="text-lg" aria-hidden="true">🏃</span>
+          <h2 id="exercise-heading" class="section-label">運動</h2>
+          <span class="ml-auto text-xs text-slate-400">必須</span>
+        </div>
+
+        <!-- 列ヘッダー -->
+        <div class="flex items-center gap-3 pb-1 border-b border-slate-100">
+          <span class="w-4 shrink-0"></span>
+          <span class="flex-1 text-xs text-slate-400">運動種類</span>
+          <span class="w-28 shrink-0 text-xs text-slate-400 text-right pr-9">時間</span>
+        </div>
+
+        <!-- 運動種類チェックリスト -->
+        <div class="divide-y divide-slate-100 -mt-1" role="group" aria-label="運動種類と時間">
+
+          <div class="flex items-center gap-3 py-2.5">
+            <input type="checkbox" id="ex-stretch-am" name="ex-stretch-am" class="exercise-check" aria-label="ストレッチ（朝）" />
+            <label for="ex-stretch-am" class="flex-1 text-sm text-slate-700 cursor-pointer select-none">ストレッチ（朝）</label>
+            <div class="relative w-28 shrink-0">
+              <input type="number" id="ex-stretch-am-min" name="ex-stretch-am-min" class="field pr-8 text-sm py-1.5" min="0" max="300" placeholder="0" aria-label="ストレッチ（朝）時間（分）" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">分</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 py-2.5">
+            <input type="checkbox" id="ex-stretch-pm" name="ex-stretch-pm" class="exercise-check" aria-label="ストレッチ（夜）" />
+            <label for="ex-stretch-pm" class="flex-1 text-sm text-slate-700 cursor-pointer select-none">ストレッチ（夜）</label>
+            <div class="relative w-28 shrink-0">
+              <input type="number" id="ex-stretch-pm-min" name="ex-stretch-pm-min" class="field pr-8 text-sm py-1.5" min="0" max="300" placeholder="0" aria-label="ストレッチ（夜）時間（分）" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">分</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 py-2.5">
+            <input type="checkbox" id="ex-hot-yoga" name="ex-hot-yoga" class="exercise-check" aria-label="ホットヨガ" />
+            <label for="ex-hot-yoga" class="flex-1 text-sm text-slate-700 cursor-pointer select-none">ホットヨガ</label>
+            <div class="relative w-28 shrink-0">
+              <input type="number" id="ex-hot-yoga-min" name="ex-hot-yoga-min" class="field pr-8 text-sm py-1.5" min="0" max="300" placeholder="0" aria-label="ホットヨガ時間（分）" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">分</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 py-2.5">
+            <input type="checkbox" id="ex-pilates" name="ex-pilates" class="exercise-check" aria-label="ホットマシンピラティス" />
+            <label for="ex-pilates" class="flex-1 text-sm text-slate-700 cursor-pointer select-none">ホットマシンピラティス</label>
+            <div class="relative w-28 shrink-0">
+              <input type="number" id="ex-pilates-min" name="ex-pilates-min" class="field pr-8 text-sm py-1.5" min="0" max="300" placeholder="0" aria-label="ホットマシンピラティス時間（分）" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">分</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 py-2.5">
+            <input type="checkbox" id="ex-gym" name="ex-gym" class="exercise-check" aria-label="筋トレ" />
+            <label for="ex-gym" class="flex-1 text-sm text-slate-700 cursor-pointer select-none">筋トレ</label>
+            <div class="relative w-28 shrink-0">
+              <input type="number" id="ex-gym-min" name="ex-gym-min" class="field pr-8 text-sm py-1.5" min="0" max="300" placeholder="0" aria-label="筋トレ時間（分）" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">分</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 py-2.5">
+            <input type="checkbox" id="ex-walking" name="ex-walking" class="exercise-check" aria-label="ウォーキング" />
+            <label for="ex-walking" class="flex-1 text-sm text-slate-700 cursor-pointer select-none">ウォーキング</label>
+            <div class="relative w-28 shrink-0">
+              <input type="number" id="ex-walking-min" name="ex-walking-min" class="field pr-8 text-sm py-1.5" min="0" max="300" placeholder="0" aria-label="ウォーキング時間（分）" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">分</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 py-2.5">
+            <input type="checkbox" id="ex-running" name="ex-running" class="exercise-check" aria-label="ランニング" />
+            <label for="ex-running" class="flex-1 text-sm text-slate-700 cursor-pointer select-none">ランニング</label>
+            <div class="relative w-28 shrink-0">
+              <input type="number" id="ex-running-min" name="ex-running-min" class="field pr-8 text-sm py-1.5" min="0" max="300" placeholder="0" aria-label="ランニング時間（分）" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">分</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 py-2.5">
+            <input type="checkbox" id="ex-other" name="ex-other" class="exercise-check" aria-label="その他" />
+            <label for="ex-other" class="flex-1 text-sm text-slate-700 cursor-pointer select-none">その他</label>
+            <div class="relative w-28 shrink-0">
+              <input type="number" id="ex-other-min" name="ex-other-min" class="field pr-8 text-sm py-1.5" min="0" max="300" placeholder="0" aria-label="その他運動時間（分）" />
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">分</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- メモ -->
+        <div>
+          <p class="text-xs text-slate-500 mb-1.5">メモ（任意）</p>
+          <textarea id="exerciseNote" name="exerciseNote" class="field" placeholder="今日の運動について…" maxlength="200" aria-label="運動のメモ"></textarea>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════
+           6. AI学習
+      ══════════════════════════════════════ -->
+      <section class="card p-5 space-y-4" aria-labelledby="ai-heading" data-section="ai">
+        <div class="flex items-center gap-2">
+          <span class="text-lg" aria-hidden="true">🤖</span>
+          <h2 id="ai-heading" class="section-label">AI 学習</h2>
+          <span class="ml-auto text-xs text-slate-400">必須</span>
+        </div>
+
+        <!-- 学習内容リスト -->
+        <div>
+          <div class="grid gap-x-3 mb-2 px-1 text-xs text-slate-500" style="grid-template-columns: 1.25rem 1fr auto;">
+            <span></span>
+            <span>学習内容</span>
+            <span class="text-right pr-1">学習時間</span>
+          </div>
+          <div class="space-y-2">
+            <!-- 本気ドリル -->
+            <div class="grid items-center gap-x-3" style="grid-template-columns: 1.25rem 1fr auto;">
+              <input type="checkbox" id="ai-drill" class="w-4 h-4 rounded accent-violet-500" />
+              <label for="ai-drill" class="text-sm text-slate-700 cursor-pointer">本気ドリル</label>
+              <div class="flex items-center gap-1">
+                <input type="number" id="ai-drill-count" name="aiDrillCount" class="field w-16 text-right" min="0" max="999" placeholder="0" aria-label="本気ドリル レッスン数" />
+                <span class="text-xs text-slate-400 whitespace-nowrap">レッスン</span>
+              </div>
+            </div>
+            <!-- 講義 -->
+            <div class="grid items-center gap-x-3" style="grid-template-columns: 1.25rem 1fr auto;">
+              <input type="checkbox" id="ai-lecture" class="w-4 h-4 rounded accent-violet-500" />
+              <label for="ai-lecture" class="text-sm text-slate-700 cursor-pointer">講義</label>
+              <div class="flex items-center gap-1">
+                <input type="number" id="ai-lecture-min" name="aiLectureMin" class="field w-16 text-right" min="0" max="480" placeholder="0" aria-label="講義 学習時間（分）" />
+                <span class="text-xs text-slate-400 whitespace-nowrap">分</span>
+              </div>
+            </div>
+            <!-- 講義復習 -->
+            <div class="grid items-center gap-x-3" style="grid-template-columns: 1.25rem 1fr auto;">
+              <input type="checkbox" id="ai-review" class="w-4 h-4 rounded accent-violet-500" />
+              <label for="ai-review" class="text-sm text-slate-700 cursor-pointer">講義復習</label>
+              <div class="flex items-center gap-1">
+                <input type="number" id="ai-review-min" name="aiReviewMin" class="field w-16 text-right" min="0" max="480" placeholder="0" aria-label="講義復習 学習時間（分）" />
+                <span class="text-xs text-slate-400 whitespace-nowrap">分</span>
+              </div>
+            </div>
+            <!-- 課題作成 -->
+            <div class="grid items-center gap-x-3" style="grid-template-columns: 1.25rem 1fr auto;">
+              <input type="checkbox" id="ai-assignment" class="w-4 h-4 rounded accent-violet-500" />
+              <label for="ai-assignment" class="text-sm text-slate-700 cursor-pointer">課題作成</label>
+              <div class="flex items-center gap-1">
+                <input type="number" id="ai-assignment-min" name="aiAssignmentMin" class="field w-16 text-right" min="0" max="480" placeholder="0" aria-label="課題作成 学習時間（分）" />
+                <span class="text-xs text-slate-400 whitespace-nowrap">分</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- メモ -->
+        <div>
+          <p class="text-xs text-slate-500 mb-1.5">学習メモ（任意）</p>
+          <textarea id="aiNote" name="aiNote" class="field" placeholder="今日学んだこと、気づき…" maxlength="300" aria-label="AI学習のメモ"></textarea>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════
+           7. Good & New
+      ══════════════════════════════════════ -->
+      <section class="card p-5 space-y-4" aria-labelledby="gn-heading" data-section="gn">
+        <div class="flex items-center gap-2">
+          <span class="text-lg" aria-hidden="true">✨</span>
+          <h2 id="gn-heading" class="section-label">Good &amp; New</h2>
+          <span class="ml-auto text-xs text-slate-400">任意</span>
+        </div>
+        <p class="text-xs text-slate-500 -mt-2">今日の「良かったこと」「新しく気づいたこと」を書きましょう</p>
+
+        <div id="gnList" class="space-y-2">
+          <div class="gn-item flex gap-2">
+            <select class="field w-24 shrink-0 text-xs" aria-label="種別">
+              <option value="Good">✅ Good</option>
+              <option value="New">💡 New</option>
+            </select>
+            <input type="text" class="field flex-1" placeholder="良かったこと・新しいこと…" maxlength="200" aria-label="Good & New 入力" />
+          </div>
+        </div>
+
+        <button type="button" id="addGnBtn" class="w-full py-2 text-xs text-primary-500 border border-primary-200 rounded-xl hover:bg-primary-50 transition flex items-center justify-center gap-1">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          項目を追加
+        </button>
+      </section>
+
+      <!-- ══════════════════════════════════════
+           8. 感謝日記
+      ══════════════════════════════════════ -->
+      <section class="card p-5 space-y-4" aria-labelledby="gratitude-heading" data-section="gratitude">
+        <div class="flex items-center gap-2">
+          <span class="text-lg" aria-hidden="true">🙏</span>
+          <h2 id="gratitude-heading" class="section-label">感謝日記</h2>
+          <span class="ml-auto text-xs text-slate-400">任意</span>
+        </div>
+        <p class="text-xs text-slate-500 -mt-2">今日感謝したいことを3つ書きましょう</p>
+
+        <div class="space-y-2">
+          <div class="flex gap-2 items-center">
+            <span class="text-primary-400 text-sm shrink-0" aria-hidden="true">♡</span>
+            <input type="text" name="gratitude1" class="field flex-1" placeholder="感謝したいこと①" maxlength="200" aria-label="感謝①" />
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="text-primary-400 text-sm shrink-0" aria-hidden="true">♡</span>
+            <input type="text" name="gratitude2" class="field flex-1" placeholder="感謝したいこと②" maxlength="200" aria-label="感謝②" />
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="text-primary-400 text-sm shrink-0" aria-hidden="true">♡</span>
+            <input type="text" name="gratitude3" class="field flex-1" placeholder="感謝したいこと③" maxlength="200" aria-label="感謝③" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════
+           送信ボタン
+      ══════════════════════════════════════ -->
+      <div class="sticky bottom-4">
+        <button
+          type="submit"
+          id="submitBtn"
+          class="w-full py-4 rounded-2xl gradient-bar text-white font-semibold text-sm shadow-lg hover:opacity-95 hover:shadow-xl active:scale-[0.99] transition-all duration-150 flex items-center justify-center gap-2"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          記録を保存する
+        </button>
+        <p class="text-center text-xs text-slate-400 mt-2" id="errorMsg" role="alert" aria-live="polite"></p>
+      </div>
+
+    </form>
+  </main>
+
+  <!-- GAS送信用 hidden フォーム（CORS回避・recordForm の外に配置） -->
+  <iframe name="gas-iframe" style="display:none" aria-hidden="true"></iframe>
+  <form id="gas-form" method="POST" target="gas-iframe" style="display:none">
+    <input type="hidden" name="data" id="gas-data" />
+  </form>
+
+  <!-- ══════════════════════════════════════
+       完了オーバーレイ
+  ══════════════════════════════════════ -->
+  <div id="successOverlay" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+    <div class="bg-white rounded-3xl p-8 mx-4 max-w-sm w-full shadow-2xl text-center space-y-4">
+      <div class="w-16 h-16 rounded-full gradient-bar flex items-center justify-center mx-auto shadow-lg">
+        <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+        </svg>
+      </div>
+      <h2 id="successTitle" class="text-lg font-bold text-slate-800">記録を保存しました！</h2>
+      <p class="text-sm text-slate-500">今日のデータが正常に記録されました。<br>継続は力なり。明日も頑張りましょう 💪</p>
+      <div class="space-y-2 pt-2">
+        <a href="index-g.html" class="block w-full py-3 rounded-xl gradient-bar text-white text-sm font-semibold hover:opacity-90 transition">
+          ダッシュボードを見る
+        </a>
+        <button type="button" id="recordAgainBtn" class="w-full py-3 rounded-xl border border-slate-200 text-slate-500 text-sm hover:bg-slate-50 transition">
+          続けて入力する
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       JavaScript
+  ══════════════════════════════════════ -->
+  <script>
+    // ── 入力進捗バー（他より先に宣言） ────────────────────────
+    const requiredSections = ['mood', 'sleep', 'work', 'body', 'exercise', 'ai'];
+    const doneSections = new Set();
+
+    function markSectionDone(section) {
+      if (!section) return;
+      doneSections.add(section.dataset.section);
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const total = requiredSections.length + 1;
+      let done = document.getElementById('recordDate').value ? 1 : 0;
+      done += requiredSections.filter(s => doneSections.has(s)).length;
+      const pct = Math.round((done / total) * 100);
+      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressLabel').textContent = `${done} / ${total}`;
+    }
+
+    // ── 日付初期化 ──────────────────────────────────────────
+    const today = new Date();
+    const isoDate = today.toISOString().split('T')[0];
+    document.getElementById('recordDate').value = isoDate;
+    document.getElementById('headerDate').textContent =
+      today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+    updateProgress();
+
+    // ── スライダー: リアルタイム値表示 ──────────────────────
+    const sliders = [
+      { id: 'moodScore',    display: 'moodVal',      suffix: ' / 10', color: 'text-primary-600' },
+      { id: 'sleepQuality', display: 'sleepQualVal', suffix: ' / 10', color: 'text-indigo-500' },
+      { id: 'workScore',    display: 'workVal',      suffix: ' / 10', color: 'text-rose-500' },
+    ];
+    sliders.forEach(({ id, display, suffix, color, labels }) => {
+      const el  = document.getElementById(id);
+      const out = document.getElementById(display);
+      const update = () => {
+        const v = parseFloat(el.value);
+        out.textContent = labels ? labels[v] : v + suffix;
+        out.className = `text-sm font-bold ${color}`;
+        // スライダー背景をグラデーションで塗りつぶす
+        const pct = ((v - el.min) / (el.max - el.min)) * 100;
+        el.style.background = `linear-gradient(to right, currentColor 0%, currentColor ${pct}%, #e2e8f0 ${pct}%)`;
+      };
+      el.addEventListener('input', update);
+      // 初期色
+      const colorMap = { 'moodScore': '#0b7dee', 'sleepQuality': '#6366f1', 'workScore': '#f43f5e' };
+      el.style.setProperty('--thumb-color', colorMap[id] || '#0b7dee');
+    });
+
+    // ── 絵文字ボタン: 単一選択 ────────────────────────────
+    document.querySelectorAll('.emoji-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const group = btn.dataset.group;
+        document.querySelectorAll(`.emoji-btn[data-group="${group}"]`).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const hiddenId = group + 'Emoji';
+        const hidden = document.getElementById(hiddenId);
+        if (hidden) hidden.value = btn.dataset.val;
+        // 絵文字選択でスライダーも連動
+        if (group === 'mood') {
+          document.getElementById('moodScore').value = btn.dataset.val;
+          document.getElementById('moodScore').dispatchEvent(new Event('input'));
+        }
+        markSectionDone(btn.closest('[data-section]'));
+      });
+    });
+
+    // ── タグボタン: 複数選択トグル ────────────────────────
+    document.querySelectorAll('.tag-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+      });
+    });
+
+    // ── 運動チェックボックスID一覧 ────────────────────────
+    const exerciseItems = [
+      'ex-stretch-am', 'ex-stretch-pm', 'ex-hot-yoga', 'ex-pilates',
+      'ex-gym', 'ex-walking', 'ex-running', 'ex-other',
+    ];
+
+    // ── BMI 自動計算 ──────────────────────────────────────
+    function calcBMI() {
+      const w = parseFloat(document.getElementById('bodyWeight').value);
+      const h = parseFloat(document.getElementById('bodyHeight').value);
+      const disp = document.getElementById('bmiDisplay');
+      if (w > 0 && h > 0) {
+        const bmi = (w / ((h / 100) ** 2)).toFixed(1);
+        let label = '';
+        if      (bmi < 18.5) label = '低体重';
+        else if (bmi < 25)   label = '標準';
+        else if (bmi < 30)   label = '過体重';
+        else                 label = '肥満';
+        disp.textContent = `${bmi} (${label})`;
+        disp.className = bmi < 18.5 || bmi >= 25
+          ? 'text-lg font-bold text-amber-500'
+          : 'text-lg font-bold text-emerald-600';
+      } else {
+        disp.textContent = '—';
+        disp.className = 'text-lg font-bold text-slate-700';
+      }
+    }
+    document.getElementById('bodyWeight').addEventListener('input', calcBMI);
+    document.getElementById('bodyHeight').addEventListener('input', calcBMI);
+
+    // ── Good & New 項目追加 ───────────────────────────────
+    document.getElementById('addGnBtn').addEventListener('click', () => {
+      const list = document.getElementById('gnList');
+      if (list.children.length >= 5) return;
+      const item = document.createElement('div');
+      item.className = 'gn-item flex gap-2';
+      item.innerHTML = `
+        <select class="field w-24 shrink-0 text-xs" aria-label="種別">
+          <option value="Good">✅ Good</option>
+          <option value="New">💡 New</option>
+        </select>
+        <input type="text" class="field flex-1" placeholder="良かったこと・新しいこと…" maxlength="200" aria-label="Good & New 入力" />`;
+      list.appendChild(item);
+      item.querySelector('input').focus();
+    });
+
+    // 各セクションの入力検知で進捗更新
+    document.querySelectorAll('[data-section]').forEach(section => {
+      section.addEventListener('input', () => markSectionDone(section));
+      section.addEventListener('change', () => markSectionDone(section));
+    });
+    document.getElementById('recordDate').addEventListener('change', updateProgress);
+
+    // ── フォーム送信 ──────────────────────────────────────
+    document.getElementById('recordForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const errEl = document.getElementById('errorMsg');
+      errEl.textContent = '';
+
+      // バリデーション
+      const date   = document.getElementById('recordDate').value;
+      const mood   = document.getElementById('moodScore').value;
+      const sleep  = document.getElementById('sleepHours').value;
+      const weight = document.getElementById('bodyWeight').value;
+
+      if (!date)   { errEl.textContent = '📅 記録日を入力してください。'; return; }
+      if (!sleep)  { errEl.textContent = '🌙 睡眠時間を入力してください。'; return; }
+      if (!weight) { errEl.textContent = '⚖️ 体重を入力してください。'; return; }
+
+      // データ収集（実際の保存処理はここに追加）
+      const record = {
+        date,
+        mood: {
+          score:   parseFloat(mood),
+          emoji:   document.getElementById('moodEmoji').value,
+          tags:    [...document.querySelectorAll('.tag-btn[data-group="moodTag"].active')].map(b => b.textContent),
+          note:    document.getElementById('moodNote').value,
+        },
+        sleep: {
+          hours:   parseFloat(document.getElementById('sleepHours').value) || null,
+          bedtime: document.getElementById('sleepBedtime').value,
+          quality: parseInt(document.getElementById('sleepQuality').value),
+          tags:    [...document.querySelectorAll('.tag-btn[data-group="sleepTag"].active')].map(b => b.textContent),
+        },
+        work: {
+          score: parseInt(document.getElementById('workScore').value),
+          tags:  [...document.querySelectorAll('.tag-btn[data-group="workTag"].active')].map(b => b.textContent),
+          note:  document.getElementById('workNote').value,
+        },
+        body: {
+          weight: parseFloat(document.getElementById('bodyWeight').value) || null,
+          fat:    parseFloat(document.getElementById('bodyFat').value) || null,
+          height: parseFloat(document.getElementById('bodyHeight').value) || null,
+          note:   document.getElementById('bodyNote').value,
+        },
+        exercise: {
+          activities: [
+            { id: 'stretch-am', label: 'ストレッチ（朝）',       checked: document.getElementById('ex-stretch-am').checked, minutes: parseInt(document.getElementById('ex-stretch-am-min').value) || null },
+            { id: 'stretch-pm', label: 'ストレッチ（夜）',       checked: document.getElementById('ex-stretch-pm').checked, minutes: parseInt(document.getElementById('ex-stretch-pm-min').value) || null },
+            { id: 'hot-yoga',   label: 'ホットヨガ',            checked: document.getElementById('ex-hot-yoga').checked,   minutes: parseInt(document.getElementById('ex-hot-yoga-min').value) || null },
+            { id: 'pilates',    label: 'ホットマシンピラティス',  checked: document.getElementById('ex-pilates').checked,    minutes: parseInt(document.getElementById('ex-pilates-min').value) || null },
+            { id: 'gym',        label: '筋トレ',                checked: document.getElementById('ex-gym').checked,        minutes: parseInt(document.getElementById('ex-gym-min').value) || null },
+            { id: 'walking',    label: 'ウォーキング',           checked: document.getElementById('ex-walking').checked,    minutes: parseInt(document.getElementById('ex-walking-min').value) || null },
+            { id: 'running',    label: 'ランニング',             checked: document.getElementById('ex-running').checked,    minutes: parseInt(document.getElementById('ex-running-min').value) || null },
+            { id: 'other',      label: 'その他',                checked: document.getElementById('ex-other').checked,      minutes: parseInt(document.getElementById('ex-other-min').value) || null },
+          ].filter(a => a.checked),
+          note: document.getElementById('exerciseNote').value,
+        },
+        ai: {
+          activities: [
+            { id: 'drill',      label: '本気ドリル', checked: document.getElementById('ai-drill').checked,      lessons: parseInt(document.getElementById('ai-drill-count').value) || null },
+            { id: 'lecture',    label: '講義',       checked: document.getElementById('ai-lecture').checked,    minutes: parseInt(document.getElementById('ai-lecture-min').value) || null },
+            { id: 'review',     label: '講義復習',   checked: document.getElementById('ai-review').checked,     minutes: parseInt(document.getElementById('ai-review-min').value) || null },
+            { id: 'assignment', label: '課題作成',   checked: document.getElementById('ai-assignment').checked, minutes: parseInt(document.getElementById('ai-assignment-min').value) || null },
+          ].filter(a => a.checked),
+          note: document.getElementById('aiNote').value,
+        },
+        goodAndNew: [...document.querySelectorAll('.gn-item')].map(item => ({
+          type:  item.querySelector('select').value,
+          text:  item.querySelector('input').value,
+        })).filter(g => g.text.trim()),
+        gratitude: [
+          document.querySelector('[name="gratitude1"]').value,
+          document.querySelector('[name="gratitude2"]').value,
+          document.querySelector('[name="gratitude3"]').value,
+        ].filter(g => g.trim()),
+      };
+
+      // ── Google スプレッドシートへ送信 ──────────────────────
+      // ↓ GAS をデプロイした後にここの URL を書き換えてください
+      const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby8hUANBC74ds35UDnRsmGJZPCGWgsQWjpCCT1g6elexPqu7zgyXTvUZYtvHnjhuANnDA/exec';
+
+      // ローカルバックアップ（localStorage）
+      const key = `record_${date}`;
+      localStorage.setItem(key, JSON.stringify(record));
+
+      const submitBtn = document.querySelector('[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '送信中…';
+      errEl.textContent = '';
+
+      if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_SCRIPT_URL_HERE') {
+        // URL 未設定の場合はローカル保存のみ
+        console.warn('SCRIPT_URL が未設定です。gas-script.js の手順を参照してください。');
+        submitBtn.disabled = false;
+        submitBtn.textContent = '記録を保存する';
+        document.getElementById('successOverlay').classList.add('show');
+        document.getElementById('successOverlay').focus();
+        return;
+      }
+
+      // hidden フォームで送信（CORS プリフライト不要）
+      const gasForm = document.getElementById('gas-form');
+      gasForm.action = SCRIPT_URL;
+      document.getElementById('gas-data').value = JSON.stringify(record);
+      gasForm.submit();
+
+      // 送信後すぐに完了表示（レスポンスは hidden iframe で受け取るため待機不要）
+      setTimeout(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '記録を保存する';
+        document.getElementById('successOverlay').classList.add('show');
+        document.getElementById('successOverlay').focus();
+      }, 800);
+    });
+
+    // ── 完了オーバーレイを閉じて再入力 ──────────────────────
+    document.getElementById('recordAgainBtn').addEventListener('click', () => {
+      document.getElementById('successOverlay').classList.remove('show');
+      document.getElementById('recordForm').reset();
+      document.getElementById('recordDate').value = isoDate;
+      doneSections.clear();
+      updateProgress();
+      document.querySelectorAll('.emoji-btn, .tag-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('input[type=range]').forEach(r => r.dispatchEvent(new Event('input')));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
+</body>
+</html>

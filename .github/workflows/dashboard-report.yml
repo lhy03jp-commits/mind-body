@@ -2,8 +2,8 @@ name: Dashboard Screenshot → Slack
 
 on:
   schedule:
-    # JST 09:00 = UTC 00:00
-    - cron: '0 0 * * *'
+    # JST 08:00 = UTC 23:00 (前日)
+    - cron: '0 23 * * *'
     # JST 21:00 = UTC 12:00
     - cron: '0 12 * * *'
   workflow_dispatch: # GitHub UI から手動実行も可能

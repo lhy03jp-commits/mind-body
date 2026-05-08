@@ -5,7 +5,13 @@
   "main": "gas-script.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "screenshot": "node scripts/screenshot-to-slack.js"
+    "screenshot": "node scripts/screenshot-to-slack.js",
+    "deploy:surge": "node scripts/deploy-to-surge.js",
+    "screenshot:dashboard": "node scripts/take-screenshot.js",
+    "slack:post-image": "node scripts/post-to-slack.js",
+    "publish:dashboard": "node scripts/generate-dashboard.js && node scripts/deploy-to-surge.js && node scripts/take-screenshot.js && node scripts/post-to-slack.js",
+    "health": "node scripts/generate-dashboard.js",
+    "health:watch": "node -e \"const {execSync}=require('child_process');const run=()=>{try{execSync('node scripts/generate-dashboard.js',{stdio:'inherit'})}catch(e){}};run();setInterval(run,300000);\""
   },
   "keywords": [],
   "author": "",
@@ -13,10 +19,12 @@
   "type": "commonjs",
   "devDependencies": {
     "@playwright/test": "^1.59.1",
-    "playwright": "^1.59.1"
+    "playwright": "^1.59.1",
+    "surge": "^0.27.3"
   },
   "dependencies": {
     "axios": "^1.15.2",
+    "dotenv": "^17.4.2",
     "form-data": "^4.0.5"
   }
 }

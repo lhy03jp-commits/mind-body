@@ -1,5 +1,10 @@
 'use strict';
 
+/**
+ * Netlify 等の固定 URL を撮影して Slack へ送るワンショット用。
+ * Surge 公開 →撮影→通知の分割版は `deploy-to-surge.js` / `take-screenshot.js` / `post-to-slack.js` と `npm run publish:dashboard` を参照。
+ */
+
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');

@@ -1,0 +1,15 @@
+# 秘密情報
+.env
+.env.local
+.env.*.local
+
+# 依存関係
+node_modules/
+
+# ビルド成果物 / スクショ等の一時生成物
+/tmp/
+*.log
+.DS_Store
+
+# Surge デプロイ用の作業ディレクトリ（必要に応じて）
+.surge/

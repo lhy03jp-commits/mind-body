@@ -107,21 +107,21 @@
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-4" style="grid-template-rows: auto auto;">
 
         <!-- トータルスコア (左列、2行分) -->
-        <article class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 card-hover flex flex-col items-center justify-center gap-3 lg:row-span-2" aria-label="トータルスコア 74点">
+        <article id="total-score-card" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 card-hover flex flex-col items-center justify-center gap-3 lg:row-span-2" aria-label="トータルスコア">
           <p class="text-xs font-medium text-slate-500 uppercase tracking-widest">Total Score</p>
-          <div class="relative w-28 h-28" role="img" aria-label="スコア74%のリング">
+          <div class="relative w-28 h-28" role="img" id="total-score-ring-wrap" aria-label="トータルスコアリング">
             <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100" aria-hidden="true">
               <circle cx="50" cy="50" r="42" fill="none" stroke="#f1f5f9" stroke-width="10"/>
-              <circle cx="50" cy="50" r="42" fill="none" stroke="#0b7dee" stroke-width="10"
-                stroke-dasharray="263.9" stroke-dashoffset="68.6" stroke-linecap="round"/>
+              <circle id="total-score-ring" cx="50" cy="50" r="42" fill="none" stroke="#0b7dee" stroke-width="10"
+                stroke-dasharray="263.9" stroke-dashoffset="263.9" stroke-linecap="round"/>
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span class="text-3xl font-bold text-primary-500 leading-none" aria-hidden="true">74</span>
-              <span class="text-xs text-slate-400 mt-1" aria-hidden="true">/ 100</span>
+              <span id="total-score-value" class="text-3xl font-bold text-primary-500 leading-none" aria-hidden="true">--</span>
+              <span class="text-xs text-slate-400 mt-1" aria-hidden="true">/ 10</span>
             </div>
           </div>
           <span class="tag-chip bg-emerald-50 text-emerald-700">↑ 先週比 +2</span>
-          <p class="text-xs text-slate-500 text-center leading-relaxed">全体的に良好。<br>睡眠の改善が鍵です。</p>
+          <p id="total-score-comment" class="text-xs text-slate-500 text-center leading-relaxed">読み込み中...</p>
         </article>
 
         <!-- 気分スコア (行1, 列2) -->
@@ -161,13 +161,13 @@
           </div>
           <div>
             <div class="flex justify-between text-xs text-slate-500 mb-1">
-              <span>質スコア</span><span id="sleep-score-text" class="text-primary-500 font-medium">-- / 10</span>
+              <span>スコア</span><span id="sleep-score-text" class="text-primary-500 font-medium">-- / 10</span>
             </div>
             <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="睡眠スコア">
               <div id="sleep-bar" class="h-full rounded-full" style="width:0%;background:linear-gradient(90deg,#0b7dee,#369afc)"></div>
             </div>
           </div>
-          <p class="text-slate-500 text-xs">目標 7.5h に対して</p>
+          <p class="text-slate-500 text-xs">目標 6.5h に対して</p>
         </article>
 
         <!-- 仕事負荷 (行1, 列4) -->
@@ -207,59 +207,59 @@
           </div>
           <div>
             <div class="flex justify-between text-xs text-slate-500 mb-1">
-              <span>進捗</span><span id="body-progress-text" class="text-primary-500 font-medium">--%</span>
+              <span>スコア</span><span id="body-progress-text" class="text-primary-500 font-medium">-- / 10</span>
             </div>
-            <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="目標体重への進捗">
+            <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="10" aria-label="体重スコア">
               <div id="body-bar" class="h-full rounded-full" style="width:0%;background:linear-gradient(90deg,#0b7dee,#369afc)"></div>
             </div>
           </div>
-          <p id="body-bmi-text" class="text-slate-500 text-xs">BMI -- ／ 目標 65.0kg</p>
+          <p id="body-bmi-text" class="text-slate-500 text-xs">体脂肪率 -- % ／ BMI -- ／ 目標 52.0kg</p>
         </article>
 
         <!-- 運動 (行2, 列3) -->
-        <article class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 card-hover flex flex-col gap-3" aria-label="運動 30分 目標達成">
+        <article class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 card-hover flex flex-col gap-3" aria-label="運動">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
               <span class="text-2xl" aria-hidden="true">🏃</span>
               <div>
                 <p class="text-xs text-slate-500 tracking-wider uppercase">運動</p>
-                <p class="text-slate-800 font-semibold">30分</p>
+                <p id="exercise-label" class="text-slate-800 font-semibold">--</p>
               </div>
             </div>
-            <span class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">目標達成 ✓</span>
+            <span id="exercise-badge" class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">--</span>
           </div>
           <div>
             <div class="flex justify-between text-xs text-slate-500 mb-1">
-              <span>達成率</span><span class="text-primary-500 font-medium">100%</span>
+              <span>達成スコア</span><span id="exercise-score-text" class="text-primary-500 font-medium">-- / 10</span>
             </div>
-            <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="運動目標達成率: 100%">
-              <div class="h-full rounded-full" style="width:100%;background:linear-gradient(90deg,#10b981,#34d399)"></div>
+            <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="10" aria-label="運動達成スコア">
+              <div id="exercise-bar" class="h-full rounded-full" style="width:0%;background:linear-gradient(90deg,#10b981,#34d399)"></div>
             </div>
           </div>
-          <p class="text-slate-500 text-xs">ウォーキング ／ 目標 30分</p>
+          <p id="exercise-detail" class="text-slate-500 text-xs">読み込み中...</p>
         </article>
 
         <!-- AI学習 (行2, 列4) -->
-        <article class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 card-hover flex flex-col gap-3" aria-label="AI学習 45分 目標達成">
+        <article class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 card-hover flex flex-col gap-3" aria-label="AI学習">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
               <span class="text-2xl" aria-hidden="true">🤖</span>
               <div>
                 <p class="text-xs text-slate-500 tracking-wider uppercase">AI 学習</p>
-                <p class="text-slate-800 font-semibold">45分</p>
+                <p id="ai-label" class="text-slate-800 font-semibold">--</p>
               </div>
             </div>
-            <span class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">目標達成 ✓</span>
+            <span id="ai-badge" class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">--</span>
           </div>
           <div>
             <div class="flex justify-between text-xs text-slate-500 mb-1">
-              <span>達成率</span><span class="text-primary-500 font-medium">75%</span>
+              <span>達成スコア</span><span id="ai-score-text" class="text-primary-500 font-medium">-- / 10</span>
             </div>
-            <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" aria-label="AI学習目標達成率: 75%">
-              <div class="h-full rounded-full" style="width:75%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div>
+            <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="10" aria-label="AI学習達成スコア">
+              <div id="ai-bar" class="h-full rounded-full" style="width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div>
             </div>
           </div>
-          <p class="text-slate-500 text-xs">今週 4/5日 ／ 目標 60分</p>
+          <p id="ai-detail" class="text-slate-500 text-xs">読み込み中...</p>
         </article>
 
       </div>
@@ -329,19 +329,6 @@
             <span class="tag-chip bg-slate-100 text-slate-500">毎日</span>
           </div>
 
-          <!-- インライン追加フォーム (初期非表示) -->
-          <div id="gnForm" class="hidden flex gap-2" role="form" aria-label="Good and New を追加">
-            <label for="gnInput" class="sr-only">今日の Good or New を入力</label>
-            <input
-              id="gnInput"
-              type="text"
-              placeholder="今日の Good or New を書く..."
-              class="flex-1 text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition placeholder-slate-400"
-              maxlength="200"
-            />
-            <button id="gnSubmit" type="button" class="px-3 py-2 rounded-xl gradient-bar text-white text-xs font-medium hover:opacity-90 transition shadow-sm">追加</button>
-          </div>
-
           <ul class="flex flex-col gap-3" id="gnList" role="list" aria-label="Good and New の記録一覧">
             <li class="flex gap-3" role="listitem">
               <span class="text-primary-500 mt-0.5 text-sm font-bold shrink-0" aria-hidden="true">→</span>
@@ -366,9 +353,9 @@
             </li>
           </ul>
 
-          <button type="button" id="gnAddBtn" class="mt-auto w-full py-2.5 rounded-xl text-xs text-primary-500 border border-primary-100 hover:bg-primary-50 transition">
-            + 今日の Good &amp; New を追加
-          </button>
+          <div class="mt-auto pt-3 border-t border-slate-100">
+            <p class="text-slate-500 text-xs" id="gn-streak-text">ー日間継続中 🔥 &nbsp;記録率 <span class="text-primary-500 font-medium" id="gn-rate-text">ー％</span></p>
+          </div>
         </article>
 
         <!-- 感謝日記 -->
@@ -648,57 +635,6 @@
       },
     });
 
-    // --- Good & New: ボタンでフォームをトグル表示 ---
-    const gnAddBtn  = document.getElementById('gnAddBtn');
-    const gnForm    = document.getElementById('gnForm');
-    const gnInput   = document.getElementById('gnInput');
-    const gnSubmit  = document.getElementById('gnSubmit');
-
-    gnAddBtn.addEventListener('click', () => {
-      const isHidden = gnForm.classList.contains('hidden');
-      gnForm.classList.toggle('hidden', !isHidden);
-      gnForm.classList.toggle('flex', isHidden);
-      if (isHidden) gnInput.focus();
-    });
-
-    function addGoodNew() {
-      const rawText = gnInput.value.trim();
-      if (!rawText) return;
-      const list = document.getElementById('gnList');
-
-      const li = document.createElement('li');
-      li.className = 'flex gap-3';
-      li.setAttribute('role', 'listitem');
-
-      const arrow = document.createElement('span');
-      arrow.className = 'text-primary-500 mt-0.5 text-sm font-bold shrink-0';
-      arrow.setAttribute('aria-hidden', 'true');
-      arrow.textContent = '→';
-
-      const inner = document.createElement('div');
-
-      const textP = document.createElement('p');
-      textP.className = 'text-slate-600 text-sm leading-relaxed';
-      textP.textContent = rawText;
-
-      const metaP = document.createElement('p');
-      metaP.className = 'text-slate-400 text-xs mt-0.5';
-      metaP.textContent = 'Good';
-
-      inner.appendChild(textP);
-      inner.appendChild(metaP);
-      li.appendChild(arrow);
-      li.appendChild(inner);
-      list.prepend(li);
-
-      gnInput.value = '';
-      gnForm.classList.add('hidden');
-      gnForm.classList.remove('flex');
-    }
-
-    gnSubmit.addEventListener('click', addGoodNew);
-    gnInput.addEventListener('keydown', e => { if (e.key === 'Enter') addGoodNew(); });
-
     // --- 予定リスト: チェックボックストグル ---
     document.getElementById('todoList').addEventListener('click', e => {
       const btn = e.target.closest('.todo-toggle');
@@ -743,6 +679,99 @@
 
     // ── スプレッドシートからデータを取得してダッシュボードに反映 ──
 
+    // ════════════════════════════════════════════════════
+    //  スコア計算関数
+    // ════════════════════════════════════════════════════
+
+    // 睡眠スコア：4.0h→2点 / 0.5h増ごとに+1点 / 8.0h→10点（上限10, 下限1）
+    function calcSleepScore(hours) {
+      if (!hours || hours < 3.75) return 1;
+      const score = Math.round((hours - 4.0) * 2) + 2;
+      return Math.min(10, Math.max(1, score));
+    }
+
+    // 体重スコア：前日比 +2.5kg以上→1点 ～ -2.0kg以下→10点
+    function calcWeightScore(delta) {
+      if (delta >= 2.5)  return 1;
+      if (delta >= 2.0)  return 2;
+      if (delta >= 1.5)  return 3;
+      if (delta >= 1.0)  return 4;
+      if (delta >= 0.5)  return 5;
+      if (delta >= 0)    return 6;
+      if (delta >= -0.5) return 7;
+      if (delta >= -1.0) return 8;
+      if (delta >= -1.5) return 9;
+      return 10;
+    }
+
+    // 運動スコア：チェックした種目 × 2点（上限10点）
+    // 運動内容例: "ストレッチ（朝）(10分)、ホットヨガ(60分)"
+    function calcExerciseScore(activities) {
+      if (!activities) return 0;
+      const items = String(activities).split('、').filter(s => s.trim());
+      return Math.min(10, items.length * 2);
+    }
+
+    // AI学習スコア：本気ドリル1レッスン→1点 / 講義→3点 / 講義復習→3点 / 課題作成→3点（上限10点）
+    // AI学習内容例: "本気ドリル(3レッスン)、講義(60分)、講義復習(30分)"
+    function calcAiScore(activities) {
+      if (!activities) return 0;
+      let score = 0;
+      String(activities).split('、').filter(s => s.trim()).forEach(item => {
+        const t = item.trim();
+        if (t.startsWith('本気ドリル')) {
+          const m = t.match(/\((\d+)レッスン\)/);
+          score += m ? parseInt(m[1]) : 1;
+        } else if (t.startsWith('講義復習')) {
+          score += 3;
+        } else if (t.startsWith('講義')) {
+          score += 3;
+        } else if (t.startsWith('課題作成')) {
+          score += 3;
+        }
+      });
+      return Math.min(10, score);
+    }
+
+    // トータルスコア：有効スコアの平均（10点満点）
+    function updateTotalScore(scores) {
+      const valid = scores.filter(s => s !== null && !isNaN(s));
+      if (valid.length === 0) return;
+      const avg  = valid.reduce((a, b) => a + b, 0) / valid.length;
+      const disp = Math.round(avg * 10) / 10;
+      setText('total-score-value', disp.toFixed(1));
+
+      const ringEl = document.getElementById('total-score-ring');
+      if (ringEl) {
+        const offset = (263.9 * (1 - avg / 10)).toFixed(1);
+        ringEl.setAttribute('stroke-dashoffset', offset);
+      }
+      const comment = document.getElementById('total-score-comment');
+      if (comment) {
+        comment.innerHTML =
+          disp >= 8 ? '絶好調！この調子を維持しましょう。' :
+          disp >= 6 ? '良好。もう一歩で絶好調です。' :
+          disp >= 4 ? '普通。改善できる項目に注目しましょう。' :
+                      '低調気味。無理せず休みも大切に。';
+      }
+    }
+
+    // バッジ要素を更新するユーティリティ
+    function updateBadge(id, score, thresholdGood, labelGood, labelMid, labelBad) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (score >= thresholdGood) {
+        el.className = 'inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700';
+        el.textContent = labelGood;
+      } else if (score > 0) {
+        el.className = 'inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700';
+        el.textContent = labelMid;
+      } else {
+        el.className = 'inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600';
+        el.textContent = labelBad;
+      }
+    }
+
     function escapeHtml(str) {
       return String(str)
         .replace(/&/g, '&amp;')
@@ -785,11 +814,11 @@
         setBar('mood-bar', moodScore * 10);
 
         // ── 睡眠 ──
-        const sleepHours   = parseFloat(today['睡眠時間(h)']) || 0;
-        const sleepQuality = parseFloat(today['睡眠の質'])    || 0;
+        const sleepHours = parseFloat(today['睡眠時間(h)']) || 0;
+        const sleepScore = calcSleepScore(sleepHours);
         setText('sleep-hours',      sleepHours + '時間');
-        setText('sleep-score-text', sleepQuality + ' / 10');
-        setBar('sleep-bar', sleepQuality * 10);
+        setText('sleep-score-text', sleepScore + ' / 10');
+        setBar('sleep-bar', sleepScore * 10);
 
         // ── 仕事負荷 ──
         const workScore = parseFloat(today['仕事スコア']) || 0;
@@ -799,18 +828,61 @@
         setBar('work-bar', workScore * 10);
 
         // ── 体重・BMI ──
-        const weight = parseFloat(today['体重(kg)'])   || 0;
-        const height = parseFloat(today['身長(cm)'])   || 170;
-        const bmi    = height > 0 ? (weight / Math.pow(height / 100, 2)).toFixed(1) : '--';
-        const goalWt = 65.0;
-        const startWt = records.length > 0 ? (parseFloat(records[0]['体重(kg)']) || weight) : weight;
-        const progress = startWt > goalWt
-          ? Math.round(Math.max(0, Math.min(100, (startWt - weight) / (startWt - goalWt) * 100)))
-          : 0;
+        const weight     = parseFloat(today['体重(kg)'])   || 0;
+        const height     = 147;
+        const bmi        = weight > 0 ? (weight / Math.pow(height / 100, 2)).toFixed(1) : '--';
+        const goalWt     = 52.0;
+        const bodyFat    = parseFloat(today['体脂肪率(%)']) || 0;
+        const prevRecord = records.length >= 2 ? records[records.length - 2] : null;
+        const prevWeight = prevRecord ? (parseFloat(prevRecord['体重(kg)']) || weight) : weight;
+        const weightDelta = weight - prevWeight;
+        const bodyScore   = calcWeightScore(weightDelta);
+        const deltaSign   = weightDelta > 0 ? '+' : '';
         setText('body-weight',        weight + ' kg');
-        setText('body-bmi-text',      'BMI ' + bmi + ' ／ 目標 ' + goalWt + 'kg');
-        setText('body-progress-text', progress + '%');
-        setBar('body-bar', progress);
+        setText('body-bmi-text',      '体脂肪率 ' + bodyFat + '% ／ BMI ' + bmi + ' ／ 目標 ' + goalWt + 'kg');
+        setText('body-progress-text', bodyScore + ' / 10');
+        setBar('body-bar', bodyScore * 10);
+
+        // 体重バッジ更新
+        const bodyBadgeEl = document.querySelector('[aria-label="目標へ近づいている"]');
+        if (bodyBadgeEl) {
+          if (weightDelta < 0) {
+            bodyBadgeEl.className = 'inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700';
+            bodyBadgeEl.textContent = '↓ ' + deltaSign + weightDelta.toFixed(1) + 'kg';
+          } else if (weightDelta > 0) {
+            bodyBadgeEl.className = 'inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600';
+            bodyBadgeEl.textContent = '↑ +' + weightDelta.toFixed(1) + 'kg';
+          } else {
+            bodyBadgeEl.className = 'inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500';
+            bodyBadgeEl.textContent = '→ 変化なし';
+          }
+        }
+
+        // ── 運動 ──
+        const exerciseContent  = String(today['運動内容'] || '');
+        const exerciseTotalMin = parseFloat(today['運動合計時間(分)']) || 0;
+        const exerciseScore    = calcExerciseScore(exerciseContent);
+        const exerciseItems    = exerciseContent.split('、').filter(s => s.trim());
+        const exerciseNames    = exerciseItems.map(it => it.split('(')[0].trim()).join(' / ');
+        setText('exercise-label',     exerciseTotalMin > 0 ? exerciseTotalMin + '分' : (exerciseNames || '--'));
+        setText('exercise-score-text', exerciseScore + ' / 10');
+        setText('exercise-detail',    exerciseNames ? exerciseNames + ' ／ 目標 60分' : '記録なし');
+        setBar('exercise-bar', exerciseScore * 10);
+        updateBadge('exercise-badge', exerciseScore, 6, '目標達成 ✓', '取組中', '未達成');
+
+        // ── AI学習 ──
+        const aiContent  = String(today['AI学習内容'] || '');
+        const aiScore    = calcAiScore(aiContent);
+        const aiItems    = aiContent.split('、').filter(s => s.trim());
+        const aiNames    = aiItems.map(it => it.split('(')[0].trim()).join(' / ');
+        setText('ai-label',       aiNames || '--');
+        setText('ai-score-text',  aiScore + ' / 10');
+        setText('ai-detail',      aiNames ? aiNames + ' ／ 目標 60分' : '記録なし');
+        setBar('ai-bar', aiScore * 10);
+        updateBadge('ai-badge', aiScore, 6, '目標達成 ✓', '取組中', '未達成');
+
+        // ── トータルスコア ──
+        updateTotalScore([moodScore, sleepScore, bodyScore, exerciseScore, aiScore]);
 
         // ── グラフ共通：過去14日間（データなしでも全日付を表示）──
         const recordMap = {};
@@ -881,6 +953,23 @@
               '</div>';
             gnList.appendChild(li);
           });
+        }
+
+        // ── Good & New 継続日数・記録率 ──
+        const gnRecordSet = new Set(
+          records.filter(r => r['Good & New']).map(r => String(r['日付']).split('T')[0])
+        );
+        const gnTotal = records.length;
+        const gnCount = gnRecordSet.size;
+        const gnRate  = gnTotal > 0 ? Math.round(gnCount / gnTotal * 100) : 0;
+        let gnStreak  = 0;
+        for (let i = 0; i < last14Days.length; i++) {
+          const key = last14Days[last14Days.length - 1 - i].toISOString().split('T')[0];
+          if (gnRecordSet.has(key)) { gnStreak++; } else { break; }
+        }
+        const gnStreakEl = document.getElementById('gn-streak-text');
+        if (gnStreakEl) {
+          gnStreakEl.innerHTML = gnStreak + '日間継続中 🔥 &nbsp;記録率 <span class="text-primary-500 font-medium">' + gnRate + '％</span>';
         }
 
         // ── 感謝日記（当日3件）──

@@ -50,14 +50,38 @@ function splitOutputPaths(basePath) {
   };
 }
 
+function withCacheBuster(url, attempt) {
+  const separator = url.includes('?') ? '&' : '?';
+  return url + separator + '_dashboard_ts=' + Date.now() + '_' + attempt;
+}
+
+async function loadDashboard(page) {
+  let lastError;
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    const url = withCacheBuster(targetUrl, attempt);
+    console.log('読み込み: ' + url);
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+
+    try {
+      await page.locator('#health-page-1').waitFor({ state: 'visible', timeout: 15000 });
+      await page.locator('#page-2-dashboard').waitFor({ state: 'visible', timeout: 15000 });
+      return;
+    } catch (err) {
+      lastError = err;
+      console.warn('警告: ダッシュボードDOMがまだ見つかりません（試行 ' + attempt + '/4）。再試行します。');
+      await new Promise((r) => setTimeout(r, 5000));
+    }
+  }
+  throw lastError;
+}
+
 async function main() {
   console.log('ブラウザ起動…');
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.setViewportSize({ width: 1200, height: 900 });
 
-  console.log('読み込み: ' + targetUrl);
-  await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 60000 });
+  await loadDashboard(page);
 
   try {
     await page.waitForFunction(
@@ -83,8 +107,6 @@ async function main() {
 
   const statusSection = page.locator('#health-page-1');
   const detailsSection = page.locator('#page-2-dashboard');
-  await statusSection.waitFor({ state: 'visible', timeout: 10000 });
-  await detailsSection.waitFor({ state: 'visible', timeout: 10000 });
 
   await statusSection.screenshot({ path: outputPaths.status });
   await detailsSection.screenshot({ path: outputPaths.details });

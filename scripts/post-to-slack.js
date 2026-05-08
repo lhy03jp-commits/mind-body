@@ -8,12 +8,14 @@
  *   SLACK_CHANNEL   — チャンネル ID (C...) または名前（#なし）
  *
  * 任意:
- *   SCREENSHOT_PATH — 画像パス（既定: /tmp/health-dashboard.png）
+ *   SCREENSHOT_PATH — 画像パスの基準値（既定: /tmp/health-dashboard.png）
+ *                    -status / -details の2枚があれば両方投稿
+ *   SCREENSHOT_PATHS — カンマ区切りで明示した画像パス（任意）
  *   DASHBOARD_URL   — メッセージ内リンク用（未設定時は SCREENSHOT_URL または SURGE_DOMAIN から推定）
  *   SLACK_TITLE     — アップロードファイルのタイトル
  *
  * コマンドライン:
- *   node scripts/post-to-slack.js [画像パス]
+ *   node scripts/post-to-slack.js [画像パス...]
  */
 
 require('dotenv').config();
@@ -25,10 +27,37 @@ const axios = require('axios');
 const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
 const SLACK_CHANNEL = process.env.SLACK_CHANNEL;
 
-const imagePath =
-  (process.argv[2] && process.argv[2].trim()) ||
+const defaultImagePath =
   (process.env.SCREENSHOT_PATH && String(process.env.SCREENSHOT_PATH).trim()) ||
   path.join('/tmp', 'health-dashboard.png');
+
+function splitOutputPaths(basePath) {
+  const dir = path.dirname(basePath);
+  const ext = path.extname(basePath) || '.png';
+  const base = path.basename(basePath, ext);
+  return [
+    path.join(dir, base + '-status' + ext),
+    path.join(dir, base + '-details' + ext),
+  ];
+}
+
+function resolveImagePaths() {
+  const args = process.argv.slice(2).map((p) => p.trim()).filter(Boolean);
+  if (args.length > 0) return args;
+
+  if (process.env.SCREENSHOT_PATHS && String(process.env.SCREENSHOT_PATHS).trim()) {
+    return String(process.env.SCREENSHOT_PATHS)
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+  }
+
+  const splitPaths = splitOutputPaths(defaultImagePath);
+  if (splitPaths.every((p) => fs.existsSync(p))) return splitPaths;
+  return [defaultImagePath];
+}
+
+const imagePaths = resolveImagePaths();
 
 function resolveDashboardUrl() {
   if (process.env.DASHBOARD_URL && String(process.env.DASHBOARD_URL).trim()) {
@@ -50,8 +79,9 @@ if (!SLACK_BOT_TOKEN || !SLACK_CHANNEL) {
   process.exit(1);
 }
 
-if (!fs.existsSync(imagePath)) {
-  console.error('エラー: 画像が見つかりません: ' + imagePath);
+const missingImagePath = imagePaths.find((imagePath) => !fs.existsSync(imagePath));
+if (missingImagePath) {
+  console.error('エラー: 画像が見つかりません: ' + missingImagePath);
   process.exit(1);
 }
 
@@ -90,10 +120,7 @@ async function sendToSlack() {
     minute: '2-digit',
   });
 
-  const fileBuffer = fs.readFileSync(imagePath);
-  const fileSize = fs.statSync(imagePath).size;
-  const filename = path.basename(imagePath) || 'dashboard.png';
-  const title =
+  const baseTitle =
     process.env.SLACK_TITLE && String(process.env.SLACK_TITLE).trim()
       ? String(process.env.SLACK_TITLE).trim()
       : '心身健康ダッシュボード (' + now + ')';
@@ -106,26 +133,38 @@ async function sendToSlack() {
     ? '<' + dashboardUrl + '|ダッシュボードを開く>'
     : '（公開 URL 未設定）';
 
-  console.log('Slack へアップロード 1/3 …');
-  const urlRes = await axios.post(
-    'https://slack.com/api/files.getUploadURLExternal',
-    new URLSearchParams({ filename, length: String(fileSize) }),
-    { headers: { Authorization: 'Bearer ' + SLACK_BOT_TOKEN } }
-  );
-  if (!urlRes.data.ok) throw new Error('Slack API: ' + urlRes.data.error);
-  const uploadUrl = urlRes.data.upload_url;
-  const fileId = urlRes.data.file_id;
+  const uploadedFiles = [];
+  for (const [index, imagePath] of imagePaths.entries()) {
+    const fileBuffer = fs.readFileSync(imagePath);
+    const fileSize = fs.statSync(imagePath).size;
+    const filename = path.basename(imagePath) || 'dashboard.png';
+    const titleSuffix = imagePaths.length === 1
+      ? ''
+      : index === 0
+        ? ' 1/2 心身ステータス'
+        : ' 2/2 詳細ダッシュボード';
 
-  console.log('Slack へアップロード 2/3 …');
-  await axios.post(uploadUrl, fileBuffer, {
-    headers: { 'Content-Type': 'image/png' },
-  });
+    console.log('Slack へアップロード URL 取得: ' + filename);
+    const urlRes = await axios.post(
+      'https://slack.com/api/files.getUploadURLExternal',
+      new URLSearchParams({ filename, length: String(fileSize) }),
+      { headers: { Authorization: 'Bearer ' + SLACK_BOT_TOKEN } }
+    );
+    if (!urlRes.data.ok) throw new Error('Slack API: ' + urlRes.data.error);
 
-  console.log('Slack へアップロード 3/3 …');
+    console.log('Slack へ画像アップロード: ' + filename);
+    await axios.post(urlRes.data.upload_url, fileBuffer, {
+      headers: { 'Content-Type': 'image/png' },
+    });
+
+    uploadedFiles.push({ id: urlRes.data.file_id, title: baseTitle + titleSuffix });
+  }
+
+  console.log('Slack へ共有 …');
   const completeRes = await axios.post(
     'https://slack.com/api/files.completeUploadExternal',
     {
-      files: [{ id: fileId, title }],
+      files: uploadedFiles,
       channel_id: channelId,
       initial_comment: '📊 *ダッシュボード更新* — ' + now + '\n' + linkLine,
     },

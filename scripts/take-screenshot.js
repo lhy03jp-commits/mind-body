@@ -7,7 +7,8 @@
  *   SCREENSHOT_URL — フル URL（例: https://xxx.surge.sh/health-status.html）
  *   または SURGE_DOMAIN — 例: xxx.surge.sh（既定パス /health-status.html を連結）
  *
- *   SCREENSHOT_PATH — 出力ファイル（既定: /tmp/health-dashboard.png）
+ *   SCREENSHOT_PATH — 出力ファイルの基準パス（既定: /tmp/health-dashboard.png）
+ *                    実際には -status / -details の2枚を出力
  */
 
 require('dotenv').config();
@@ -39,6 +40,16 @@ const outPath =
     ? String(process.env.SCREENSHOT_PATH).trim()
     : path.join('/tmp', 'health-dashboard.png');
 
+function splitOutputPaths(basePath) {
+  const dir = path.dirname(basePath);
+  const ext = path.extname(basePath) || '.png';
+  const base = path.basename(basePath, ext);
+  return {
+    status: path.join(dir, base + '-status' + ext),
+    details: path.join(dir, base + '-details' + ext),
+  };
+}
+
 async function main() {
   console.log('ブラウザ起動…');
   const browser = await chromium.launch();
@@ -65,10 +76,22 @@ async function main() {
   const dir = path.dirname(outPath);
   if (dir && !fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-  await page.screenshot({ path: outPath, fullPage: true });
+  const outputPaths = splitOutputPaths(outPath);
+
+  // Slackでは1枚の縦長画像が折りたたまれやすいため、2つの画面を別々に撮影する。
+  await page.addStyleTag({ content: '#dual-dashboard-nav{display:none!important;}' });
+
+  const statusSection = page.locator('#health-page-1');
+  const detailsSection = page.locator('#page-2-dashboard');
+  await statusSection.waitFor({ state: 'visible', timeout: 10000 });
+  await detailsSection.waitFor({ state: 'visible', timeout: 10000 });
+
+  await statusSection.screenshot({ path: outputPaths.status });
+  await detailsSection.screenshot({ path: outputPaths.details });
   await browser.close();
 
-  console.log('✅ スクリーンショット保存: ' + outPath);
+  console.log('✅ スクリーンショット保存: ' + outputPaths.status);
+  console.log('✅ スクリーンショット保存: ' + outputPaths.details);
 }
 
 main().catch((err) => {

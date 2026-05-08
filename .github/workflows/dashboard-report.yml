@@ -2,8 +2,9 @@ name: Dashboard Screenshot → Slack
 
 on:
   schedule:
-    # JST 08:00 = UTC 23:00 (前日)
-    - cron: '0 23 * * *'
+    # JST 08:00 着信狙い: GitHub Actions schedule の遅延実績 (6〜9h) を踏まえ
+    # 前夜 JST 22:27 (= 13:27 UTC) に発火させる。off-minute はオンタイム混雑回避。
+    - cron: '27 13 * * *'
     # JST 21:00 = UTC 12:00
     - cron: '0 12 * * *'
   workflow_dispatch: # GitHub UI から手動実行も可能

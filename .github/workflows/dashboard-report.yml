@@ -1,4 +1,5 @@
-# 毎朝 JST 8:00 にダッシュボードを再生成 → Surge 公開 → スクリーンショット → Slack 配信
+# ダッシュボードを再生成 → Surge 公開 → スクリーンショット → Slack 配信（手動実行のみ）
+# 定時配信は停止済み。再開する場合は on.schedule を戻してください。
 #
 # GitHub リポジトリの Settings → Secrets and variables → Actions で次を設定してください:
 #   SLACK_BOT_TOKEN   — Slack Bot User OAuth Token (xoxb-...)
@@ -9,14 +10,9 @@
 #   GEMINI_API_KEY    — （任意）未設定なら AI 提案はフォールバック
 #   GAS_URL           — （任意）未設定なら scripts/generate-dashboard.js の既定値
 
-name: Dashboard publish → Slack (daily 8:00 JST)
+name: Dashboard publish → Slack (manual)
 
 on:
-  schedule:
-    # GitHub Actions の schedule は best-effort で 6〜9 時間遅延する実績があるため、
-    # 8:00 JST 着信を狙い前夜 JST 22:27 (= 13:27 UTC) に発火させる。
-    # off-minute (':27') にしてオンタイムの混雑を避ける。
-    - cron: '27 13 * * *'
   workflow_dispatch:
 
 jobs:
